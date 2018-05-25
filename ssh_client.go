@@ -33,32 +33,32 @@ func ServerConfig() (*SSH_Server,error) {
 
 	var server SSH_Server
 
-	if (len(os.Args) == 0 || len(os.Args) <= 8) {
+	if len(os.Args) == 0 || len(os.Args) <= 8 {
 		return nil,errors.New("No argument was specified!")
 	}
 	
 	argsCount := 0
 	for i := 0; i < len(os.Args); i++ {	
 
-		if (os.Args[i] == "-usr") {
+		if os.Args[i] == "-usr" {
 
 			i++
 			argsCount++
 			server.User_Name = os.Args[i]
 
-		} else if (os.Args[i] == "-psw") {
+		} else if os.Args[i] == "-psw" {
 
 			i++
 			argsCount++
 			server.User_Password = os.Args[i]
 
-		} else if (os.Args[i] == "-addr") {
+		} else if os.Args[i] == "-addr" {
 
 			i++
 			argsCount++
 			server.Host_Address = os.Args[i]
 
-		} else if (os.Args[i] == "-port") {
+		} else if os.Args[i] == "-port" {
 
 			i++
 			argsCount++
@@ -70,7 +70,7 @@ func ServerConfig() (*SSH_Server,error) {
 		}
 	}
 
-	if (argsCount < 4) {
+	if argsCount < 4 {
 		return nil, errors.New("Arguments invalid!")
 	}
 
@@ -79,7 +79,7 @@ func ServerConfig() (*SSH_Server,error) {
 
 func sshConfig(usr string, psw string) *ssh.ClientConfig {
 
-	if (usr == "" || psw == "") {
+	if usr == "" || psw == ""){
 		return nil
 	}
 
@@ -141,17 +141,17 @@ func Xterm(session *ssh.Session) error {
 func main() {
 
 	server,err := ServerConfig()
-	if (err != nil) {
+	if err != nil {
 		log.Fatal("Error on config server! %s\n",err)
 	}
 
 	config := sshConfig(server.User_Name,server.User_Password)
-	if (config == nil) {
+	if config == nil {
 		log.Fatal("Error in create sshClientConfig %s\n",err)
 	}
 
 	_,err = Connect(server,config)
-	if (err != nil) {
+	if err != nil {
 		log.Fatal("Error on connection %s\n",err)
 	}
 }

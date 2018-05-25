@@ -6,11 +6,10 @@
 package main
 
 import (
-
-	"io"
+	
 	"os"
+	"log"
 	"net"
-	"fmt"
 	"errors"
 	"strconv"
 	"golang.org/x/crypto/ssh"
@@ -95,7 +94,7 @@ func sshConfig(usr string, psw string) *ssh.ClientConfig {
 	}
 }
 
-func connect(server *SSH_Server, config *ssh.ClientConfig) (*Server_connection,error)  {
+func Connect(server *SSH_Server, config *ssh.ClientConfig) (*Server_connection,error)  {
 
 	strAddr := server.Host_Address + ":" + strconv.Itoa(server.Host_Port)
 	connection,err := ssh.Dial("tcp",strAddr,config)
@@ -103,11 +102,13 @@ func connect(server *SSH_Server, config *ssh.ClientConfig) (*Server_connection,e
 	if (err != nil) {
 		return nil,err
 	}
+	defer connection.Close()
 
 	session,err := connection.NewSession()
 	if (err != nil || Xterm(session) != nil) {
 		return nil,err
 	}
+	defer session.Close()
 
 	return &Server_connection {
 		Connection: connection,
@@ -115,32 +116,6 @@ func connect(server *SSH_Server, config *ssh.ClientConfig) (*Server_connection,e
 	},nil
 }
 
-func ConfigInOutOfSession(session *ssh.Session) error {
-
-	stdin, err := session.StdinPipe()
-	if err != nil {
-		return fmt.Errorf("Error on input: %v", err)
-	}
-
-	go io.Copy(stdin, os.Stdin)
-
-	stdout, err := session.StdoutPipe()
-	if err != nil {
-		return fmt.Errorf("Error on output: %v", err)
-	}
-
-	go io.Copy(os.Stdout, stdout)
-
-	stderr, err := session.StderrPipe()
-	if err != nil {
-		return fmt.Errorf("Error on input of errors: %v", err)
-	}
-
-	go io.Copy(os.Stderr, stderr)
-
-	return nil
-
-}
 func Xterm(session *ssh.Session) error {
 
 	modes := ssh.TerminalModes {
@@ -148,19 +123,17 @@ func Xterm(session *ssh.Session) error {
 		ssh.TTY_OP_ISPEED: 14400,
 		ssh.TTY_OP_OSPEED: 14400,
 	}
-
-	defer session.Close()
 	
 	if err := session.RequestPty("xterm", 80, 40, modes); err != nil {
 		session.Close()
 		return err
 	}
 
-	if err := ConfigInOutOfSession(session); err != nil {
-		return err
-	}
-
-	_ = session.Run("ls")
+	session.Stdout = os.Stdout
+    session.Stderr = os.Stderr
+    session.Stdin = os.Stdin
+    session.Shell()
+    session.Wait()
 
 	return nil
 }
@@ -169,16 +142,16 @@ func main() {
 
 	server,err := ServerConfig()
 	if (err != nil) {
-		PrintErr("Error on config server!",err,true)
+		log.Fatal("Error on config server! %s\n",err)
 	}
 
 	config := sshConfig(server.User_Name,server.User_Password)
 	if (config == nil) {
-		PrintErr("Error in create sshClientConfig",err,true)
+		log.Fatal("Error in create sshClientConfig %s\n",err)
 	}
 
-	_,err = connect(server,config)
+	_,err = Connect(server,config)
 	if (err != nil) {
-		PrintErr("Error on connection",err,true)
+		log.Fatal("Error on connection %s\n",err)
 	}
 }

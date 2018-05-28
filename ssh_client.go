@@ -33,8 +33,8 @@ func ServerConfig() (*SSH_Server,error) {
 
 	var server SSH_Server
 
-	if len(os.Args) == 0 || len(os.Args) <= 8 {
-		return nil,errors.New("No argument was specified!")
+	if len(os.Args) == 1 || len(os.Args) <= 8 {
+		return nil,errors.New("Arguments were not specified correctly")
 	}
 	
 	argsCount := 0
@@ -77,9 +77,9 @@ func ServerConfig() (*SSH_Server,error) {
 	return &server,nil
 }
 
-func sshConfig(usr string, psw string) *ssh.ClientConfig {
+func SshConfig(usr string, psw string) *ssh.ClientConfig {
 
-	if usr == "" || psw == ""){
+	if usr == "" || psw == "" {
 		return nil
 	}
 
@@ -145,7 +145,7 @@ func main() {
 		log.Fatal("Error on config server! %s\n",err)
 	}
 
-	config := sshConfig(server.User_Name,server.User_Password)
+	config := SshConfig(server.User_Name,server.User_Password)
 	if config == nil {
 		log.Fatal("Error in create sshClientConfig %s\n",err)
 	}
